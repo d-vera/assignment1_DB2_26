@@ -1,14 +1,14 @@
 ## ADDED Requirements
 
 ### Requirement: Application shell with navigation
-The system SHALL provide a Blazor Server application with a sidebar or top navigation bar containing links to Movies, Actors, and Directors pages.
+The system SHALL provide a Blazor Server application with a sidebar containing centered branding, enlarged distinct icons for Movies (🎬), Actors (🎭), Directors (🎥), and Home (🏠), and links to each section.
 
 #### Scenario: Navigate between collection pages
 - **WHEN** the user clicks on "Movies", "Actors", or "Directors" in the navigation menu
-- **THEN** the corresponding collection list page is displayed
+- **THEN** the corresponding collection list page is displayed with active link indicators
 
 ### Requirement: List page layout
-Each collection's list page SHALL display records in a table with columns for key attributes, and action buttons for Edit and Delete on each row, plus a "Create New" button.
+Each collection's list page SHALL display records in a dark-themed table with columns for key attributes, and action buttons for Edit and Delete on each row, plus a "Create New" button.
 
 #### Scenario: View list page with data
 - **WHEN** the user navigates to any collection list page that has active records
@@ -37,7 +37,7 @@ The system SHALL display a confirmation prompt before performing a logical delet
 - **THEN** no changes are made and the list remains unchanged
 
 ### Requirement: Home page
-The system SHALL provide a home/landing page that gives an overview of the application and quick-access links to each collection.
+The system SHALL provide a home/landing page that gives an overview of the application and quick-access links to each collection using rounded card components.
 
 #### Scenario: View home page
 - **WHEN** the user opens the application root URL
