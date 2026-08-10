@@ -1,0 +1,97 @@
+@page "/actors/create"
+@page "/actors/edit/{Id}"
+@using MiniNetflix.Models
+@using MiniNetflix.Services
+@inject ActorService ActorService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(isEdit ? "Edit Actor" : "Create Actor") - MiniNetflix</PageTitle>
+
+<h1>@(isEdit ? "✏️ Edit Actor" : "🎭 Create Actor")</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <EditForm Model="actor" OnValidSubmit="HandleSubmit" FormName="actorForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">First Name</label>
+                    <InputText class="form-control" @bind-Value="actor.FirstName" />
+                    <ValidationMessage For="() => actor.FirstName" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Last Name</label>
+                    <InputText class="form-control" @bind-Value="actor.LastName" />
+                    <ValidationMessage For="() => actor.LastName" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Birth Date</label>
+                    <InputDate class="form-control" @bind-Value="actor.BirthDate" />
+                    <ValidationMessage For="() => actor.BirthDate" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Nationality</label>
+                    <InputText class="form-control" @bind-Value="actor.Nationality" />
+                    <ValidationMessage For="() => actor.Nationality" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Awards Count</label>
+                    <InputNumber class="form-control" @bind-Value="actor.AwardsCount" />
+                    <ValidationMessage For="() => actor.AwardsCount" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Photo URL (optional)</label>
+                <InputText class="form-control" @bind-Value="actor.PhotoUrl" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Biography</label>
+                <InputTextArea class="form-control" rows="4" @bind-Value="actor.Biography" />
+                <ValidationMessage For="() => actor.Biography" />
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-success">@(isEdit ? "Update" : "Create")</button>
+                <a href="/actors" class="btn btn-secondary ms-2">Cancel</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private Actor actor = new();
+    private bool isEdit => !string.IsNullOrEmpty(Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (isEdit && Id != null)
+        {
+            var existing = await ActorService.GetByIdAsync(Id);
+            if (existing != null)
+                actor = existing;
+            else
+                Navigation.NavigateTo("/actors");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (isEdit && Id != null)
+            await ActorService.UpdateAsync(Id, actor);
+        else
+            await ActorService.CreateAsync(actor);
+
+        Navigation.NavigateTo("/actors");
+    }
+}

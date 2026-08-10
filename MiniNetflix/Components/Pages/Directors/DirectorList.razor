@@ -1,0 +1,160 @@
+@page "/directors"
+@using MiniNetflix.Models
+@using MiniNetflix.Services
+@inject DirectorService DirectorService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Directors - MiniNetflix</PageTitle>
+
+<h1>🎬 Directors</h1>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="text" class="form-control" placeholder="Search directors..."
+               @bind="searchText" @bind:event="oninput" @onkeyup="ApplyFilters" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Specialization</label>
+        <select class="form-select" @bind="selectedSpecialization" @bind:after="ApplyFilters">
+            <option value="">All Specializations</option>
+            @foreach (var spec in specializations)
+            {
+                <option value="@spec">@spec</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-1 d-flex align-items-end">
+        <button class="btn btn-outline-secondary" @onclick="ClearFilters">Clear</button>
+    </div>
+</div>
+
+<div class="mb-3">
+    <a href="/directors/create" class="btn btn-primary">+ Create New Director</a>
+</div>
+
+@if (directors == null)
+{
+    <p>Loading...</p>
+}
+else if (directors.Count == 0)
+{
+    <div class="alert alert-info">No directors found. Try adjusting your filters or add a new director.</div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Birth Date</th>
+                <th>Nationality</th>
+                <th>Specialization</th>
+                <th>Films</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var director in directors)
+            {
+                <tr>
+                    <td>@director.FirstName</td>
+                    <td>@director.LastName</td>
+                    <td>@director.BirthDate.ToString("yyyy-MM-dd")</td>
+                    <td>@director.Nationality</td>
+                    <td>@director.Specialization</td>
+                    <td>🎥 @director.FilmCount</td>
+                    <td>
+                        <a href="/directors/edit/@director.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDelete(director)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (showDeleteConfirm)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete "<strong>@directorToDelete?.FirstName @directorToDelete?.LastName</strong>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ExecuteDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Director>? directors;
+    private string searchText = "";
+    private string selectedSpecialization = "";
+    private bool showDeleteConfirm;
+    private Director? directorToDelete;
+
+    private readonly List<string> specializations = new()
+    {
+        "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary",
+        "Drama", "Fantasy", "Horror", "Musical", "Mystery", "Romance",
+        "Sci-Fi", "Thriller", "War", "Western"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDirectors();
+    }
+
+    private async Task LoadDirectors()
+    {
+        directors = await DirectorService.GetAllAsync(
+            string.IsNullOrWhiteSpace(searchText) ? null : searchText,
+            string.IsNullOrWhiteSpace(selectedSpecialization) ? null : selectedSpecialization);
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadDirectors();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchText = "";
+        selectedSpecialization = "";
+        await LoadDirectors();
+    }
+
+    private void ConfirmDelete(Director director)
+    {
+        directorToDelete = director;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        directorToDelete = null;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (directorToDelete?.Id != null)
+        {
+            await DirectorService.DeleteAsync(directorToDelete.Id);
+            showDeleteConfirm = false;
+            directorToDelete = null;
+            await LoadDirectors();
+        }
+    }
+}

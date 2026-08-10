@@ -1,0 +1,182 @@
+@page "/movies"
+@using MiniNetflix.Models
+@using MiniNetflix.Services
+@inject MovieService MovieService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Movies - MiniNetflix</PageTitle>
+
+<h1>🎬 Movies</h1>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label">Search</label>
+        <input type="text" class="form-control" placeholder="Search movies..."
+               @bind="searchText" @bind:event="oninput" @onkeyup="ApplyFilters" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Genre</label>
+        <select class="form-select" @bind="selectedGenre" @bind:after="ApplyFilters">
+            <option value="">All Genres</option>
+            @foreach (var genre in genres)
+            {
+                <option value="@genre">@genre</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Min Year</label>
+        <input type="number" class="form-control" @bind="minYear" @bind:after="ApplyFilters" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Max Year</label>
+        <input type="number" class="form-control" @bind="maxYear" @bind:after="ApplyFilters" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Min Rating</label>
+        <input type="number" class="form-control" step="0.1" min="0" max="10"
+               @bind="minRating" @bind:after="ApplyFilters" />
+    </div>
+    <div class="col-md-1 d-flex align-items-end">
+        <button class="btn btn-outline-secondary" @onclick="ClearFilters">Clear</button>
+    </div>
+</div>
+
+<div class="mb-3">
+    <a href="/movies/create" class="btn btn-primary">+ Create New Movie</a>
+</div>
+
+@if (movies == null)
+{
+    <p>Loading...</p>
+}
+else if (movies.Count == 0)
+{
+    <div class="alert alert-info">No movies found. Try adjusting your filters or add a new movie.</div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Genre</th>
+                <th>Year</th>
+                <th>Duration</th>
+                <th>Rating</th>
+                <th>Language</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var movie in movies)
+            {
+                <tr>
+                    <td>@movie.Title</td>
+                    <td>@movie.Genre</td>
+                    <td>@movie.ReleaseYear</td>
+                    <td>@movie.DurationMinutes min</td>
+                    <td>⭐ @movie.Rating</td>
+                    <td>@movie.Language</td>
+                    <td>
+                        <a href="/movies/edit/@movie.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDelete(movie)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (showDeleteConfirm)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete "<strong>@movieToDelete?.Title</strong>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ExecuteDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Movie>? movies;
+    private string searchText = "";
+    private string selectedGenre = "";
+    private int? minYear;
+    private int? maxYear;
+    private decimal? minRating;
+    private bool showDeleteConfirm;
+    private Movie? movieToDelete;
+
+    private readonly List<string> genres = new()
+    {
+        "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary",
+        "Drama", "Fantasy", "Horror", "Musical", "Mystery", "Romance",
+        "Sci-Fi", "Thriller", "War", "Western"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMovies();
+    }
+
+    private async Task LoadMovies()
+    {
+        movies = await MovieService.GetAllAsync(
+            string.IsNullOrWhiteSpace(searchText) ? null : searchText,
+            string.IsNullOrWhiteSpace(selectedGenre) ? null : selectedGenre,
+            minYear,
+            maxYear,
+            minRating);
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadMovies();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchText = "";
+        selectedGenre = "";
+        minYear = null;
+        maxYear = null;
+        minRating = null;
+        await LoadMovies();
+    }
+
+    private void ConfirmDelete(Movie movie)
+    {
+        movieToDelete = movie;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        movieToDelete = null;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (movieToDelete?.Id != null)
+        {
+            await MovieService.DeleteAsync(movieToDelete.Id);
+            showDeleteConfirm = false;
+            movieToDelete = null;
+            await LoadMovies();
+        }
+    }
+}

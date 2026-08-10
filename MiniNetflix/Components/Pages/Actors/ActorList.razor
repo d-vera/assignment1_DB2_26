@@ -1,0 +1,146 @@
+@page "/actors"
+@using MiniNetflix.Models
+@using MiniNetflix.Services
+@inject ActorService ActorService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Actors - MiniNetflix</PageTitle>
+
+<h1>🎭 Actors</h1>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="text" class="form-control" placeholder="Search actors..."
+               @bind="searchText" @bind:event="oninput" @onkeyup="ApplyFilters" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Nationality</label>
+        <input type="text" class="form-control" placeholder="e.g. American"
+               @bind="selectedNationality" @bind:event="oninput" @onkeyup="ApplyFilters" />
+    </div>
+    <div class="col-md-1 d-flex align-items-end">
+        <button class="btn btn-outline-secondary" @onclick="ClearFilters">Clear</button>
+    </div>
+</div>
+
+<div class="mb-3">
+    <a href="/actors/create" class="btn btn-primary">+ Create New Actor</a>
+</div>
+
+@if (actors == null)
+{
+    <p>Loading...</p>
+}
+else if (actors.Count == 0)
+{
+    <div class="alert alert-info">No actors found. Try adjusting your filters or add a new actor.</div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Birth Date</th>
+                <th>Nationality</th>
+                <th>Awards</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var actor in actors)
+            {
+                <tr>
+                    <td>@actor.FirstName</td>
+                    <td>@actor.LastName</td>
+                    <td>@actor.BirthDate.ToString("yyyy-MM-dd")</td>
+                    <td>@actor.Nationality</td>
+                    <td>🏆 @actor.AwardsCount</td>
+                    <td>
+                        <a href="/actors/edit/@actor.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDelete(actor)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (showDeleteConfirm)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete "<strong>@actorToDelete?.FirstName @actorToDelete?.LastName</strong>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ExecuteDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Actor>? actors;
+    private string searchText = "";
+    private string selectedNationality = "";
+    private bool showDeleteConfirm;
+    private Actor? actorToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadActors();
+    }
+
+    private async Task LoadActors()
+    {
+        actors = await ActorService.GetAllAsync(
+            string.IsNullOrWhiteSpace(searchText) ? null : searchText,
+            string.IsNullOrWhiteSpace(selectedNationality) ? null : selectedNationality);
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadActors();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchText = "";
+        selectedNationality = "";
+        await LoadActors();
+    }
+
+    private void ConfirmDelete(Actor actor)
+    {
+        actorToDelete = actor;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        actorToDelete = null;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (actorToDelete?.Id != null)
+        {
+            await ActorService.DeleteAsync(actorToDelete.Id);
+            showDeleteConfirm = false;
+            actorToDelete = null;
+            await LoadActors();
+        }
+    }
+}

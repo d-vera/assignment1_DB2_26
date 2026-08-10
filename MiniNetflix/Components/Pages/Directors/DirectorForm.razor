@@ -1,0 +1,111 @@
+@page "/directors/create"
+@page "/directors/edit/{Id}"
+@using MiniNetflix.Models
+@using MiniNetflix.Services
+@inject DirectorService DirectorService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(isEdit ? "Edit Director" : "Create Director") - MiniNetflix</PageTitle>
+
+<h1>@(isEdit ? "✏️ Edit Director" : "🎬 Create Director")</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <EditForm Model="director" OnValidSubmit="HandleSubmit" FormName="directorForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">First Name</label>
+                    <InputText class="form-control" @bind-Value="director.FirstName" />
+                    <ValidationMessage For="() => director.FirstName" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Last Name</label>
+                    <InputText class="form-control" @bind-Value="director.LastName" />
+                    <ValidationMessage For="() => director.LastName" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Birth Date</label>
+                    <InputDate class="form-control" @bind-Value="director.BirthDate" />
+                    <ValidationMessage For="() => director.BirthDate" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Nationality</label>
+                    <InputText class="form-control" @bind-Value="director.Nationality" />
+                    <ValidationMessage For="() => director.Nationality" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Film Count</label>
+                    <InputNumber class="form-control" @bind-Value="director.FilmCount" />
+                    <ValidationMessage For="() => director.FilmCount" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Specialization</label>
+                <InputSelect class="form-select" @bind-Value="director.Specialization">
+                    <option value="">-- Select Specialization --</option>
+                    @foreach (var spec in specializations)
+                    {
+                        <option value="@spec">@spec</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => director.Specialization" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Biography</label>
+                <InputTextArea class="form-control" rows="4" @bind-Value="director.Biography" />
+                <ValidationMessage For="() => director.Biography" />
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-success">@(isEdit ? "Update" : "Create")</button>
+                <a href="/directors" class="btn btn-secondary ms-2">Cancel</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private Director director = new();
+    private bool isEdit => !string.IsNullOrEmpty(Id);
+
+    private readonly List<string> specializations = new()
+    {
+        "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary",
+        "Drama", "Fantasy", "Horror", "Musical", "Mystery", "Romance",
+        "Sci-Fi", "Thriller", "War", "Western"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (isEdit && Id != null)
+        {
+            var existing = await DirectorService.GetByIdAsync(Id);
+            if (existing != null)
+                director = existing;
+            else
+                Navigation.NavigateTo("/directors");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (isEdit && Id != null)
+            await DirectorService.UpdateAsync(Id, director);
+        else
+            await DirectorService.CreateAsync(director);
+
+        Navigation.NavigateTo("/directors");
+    }
+}
