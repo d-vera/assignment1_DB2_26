@@ -12,6 +12,11 @@
 
 <div class="row">
     <div class="col-md-8">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
         <EditForm Model="movie" OnValidSubmit="HandleSubmit" FormName="movieForm">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" />
@@ -78,6 +83,7 @@
 
     private Movie movie = new();
     private bool isEdit => !string.IsNullOrEmpty(Id);
+    private string? errorMessage;
 
     private readonly List<string> genres = new()
     {
@@ -100,11 +106,19 @@
 
     private async Task HandleSubmit()
     {
-        if (isEdit && Id != null)
-            await MovieService.UpdateAsync(Id, movie);
-        else
-            await MovieService.CreateAsync(movie);
+        try
+        {
+            errorMessage = null;
+            if (isEdit && Id != null)
+                await MovieService.UpdateAsync(Id, movie);
+            else
+                await MovieService.CreateAsync(movie);
 
-        Navigation.NavigateTo("/movies");
+            Navigation.NavigateTo("/movies");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to save movie: {ex.Message}";
+        }
     }
 }

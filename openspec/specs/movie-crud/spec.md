@@ -7,9 +7,17 @@ The system SHALL allow the user to create a new movie document in the Movies col
 - **WHEN** the user fills in all required fields (Title, Genre, ReleaseYear, DurationMinutes, Synopsis, Rating, Language) and submits the form
 - **THEN** the system inserts a new document into the Movies collection with `IsActive = true` and the user is redirected to the movie list
 
+#### Scenario: Create movie with custom language string
+- **WHEN** the user submits the form with any language string (such as `"Español"` or `"French"`)
+- **THEN** the system inserts the document into MongoDB without text index language override conflicts and redirects to the movie list
+
 #### Scenario: Create movie with missing required fields
 - **WHEN** the user submits the movie form with one or more required fields empty
 - **THEN** the system displays validation errors and does not insert the document
+
+#### Scenario: Form error feedback on database failure
+- **WHEN** a database operation fails during form submission
+- **THEN** the system displays an inline error alert banner on the form instead of triggering an unhandled circuit crash
 
 ### Requirement: Read movies
 The system SHALL display a list of all movies where `IsActive == true`, showing key attributes (Title, Genre, ReleaseYear, Rating).

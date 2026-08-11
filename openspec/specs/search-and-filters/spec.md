@@ -54,6 +54,10 @@ The system SHALL provide a text search input on each collection's list page that
 - **WHEN** the user types a search term that matches no documents
 - **THEN** the system displays a message indicating no results were found
 
+#### Scenario: Text search index language override disabled
+- **WHEN** text search indexes are created on collections containing a `Language` property
+- **THEN** the text index options set `language_override: "none"` to prevent document language strings from breaking MongoDB text search tokenization
+
 ### Requirement: Combine filters with text search
 The system SHALL allow the user to apply both attribute filters and text search simultaneously.
 

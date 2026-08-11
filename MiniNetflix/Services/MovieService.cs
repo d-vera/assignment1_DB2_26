@@ -15,11 +15,26 @@ public class MovieService
 
     private void CreateTextIndex()
     {
-        var indexKeys = Builders<Movie>.IndexKeys
-            .Text(m => m.Title)
-            .Text(m => m.Synopsis);
-        var indexModel = new CreateIndexModel<Movie>(indexKeys);
-        _movies.Indexes.CreateOne(indexModel);
+        try
+        {
+            var indexKeys = Builders<Movie>.IndexKeys
+                .Text(m => m.Title)
+                .Text(m => m.Synopsis);
+            var indexOptions = new CreateIndexOptions { LanguageOverride = "none" };
+            var indexModel = new CreateIndexModel<Movie>(indexKeys, indexOptions);
+            _movies.Indexes.CreateOne(indexModel);
+        }
+        catch (MongoCommandException)
+        {
+            // Drop existing index if it was created with incompatible options (e.g. default language_override)
+            _movies.Indexes.DropAll();
+            var indexKeys = Builders<Movie>.IndexKeys
+                .Text(m => m.Title)
+                .Text(m => m.Synopsis);
+            var indexOptions = new CreateIndexOptions { LanguageOverride = "none" };
+            var indexModel = new CreateIndexModel<Movie>(indexKeys, indexOptions);
+            _movies.Indexes.CreateOne(indexModel);
+        }
     }
 
     public async Task<List<Movie>> GetAllAsync(
