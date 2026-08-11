@@ -30,7 +30,15 @@ public class ActorService
         var filter = Builders<Actor>.Filter.Eq(a => a.IsActive, true);
 
         if (!string.IsNullOrWhiteSpace(searchText))
-            filter &= Builders<Actor>.Filter.Text(searchText);
+        {
+            var escapedText = System.Text.RegularExpressions.Regex.Escape(searchText);
+            var regex = new MongoDB.Bson.BsonRegularExpression(escapedText, "i");
+            filter &= Builders<Actor>.Filter.Or(
+                Builders<Actor>.Filter.Regex(a => a.FirstName, regex),
+                Builders<Actor>.Filter.Regex(a => a.LastName, regex),
+                Builders<Actor>.Filter.Regex(a => a.Biography, regex)
+            );
+        }
 
         if (!string.IsNullOrWhiteSpace(nationality))
             filter &= Builders<Actor>.Filter.Eq(a => a.Nationality, nationality);

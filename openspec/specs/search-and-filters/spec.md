@@ -36,27 +36,27 @@ The system SHALL allow the user to filter the director list by specialization (e
 - **THEN** only directors matching that specialization (and `IsActive == true`) are displayed
 
 ### Requirement: Text search across collections
-The system SHALL provide a text search input on each collection's list page that searches across the text-indexed fields of that collection using MongoDB's `$text` operator.
+The system SHALL provide a text search input on each collection's list page that performs case-insensitive substring search across designated collection fields using MongoDB's `$regex` operator.
 
 #### Scenario: Text search on movies
-- **WHEN** the user types a search term in the search box on the Movies page
-- **THEN** the system returns movies whose Title or Synopsis match the search term
+- **WHEN** the user types a search term (or partial search term) in the search box on the Movies page
+- **THEN** the system returns movies whose Title or Synopsis match the search term case-insensitively
 
 #### Scenario: Text search on actors
-- **WHEN** the user types a search term in the search box on the Actors page
-- **THEN** the system returns actors whose FirstName, LastName, or Biography match the search term
+- **WHEN** the user types a search term (or partial search term) in the search box on the Actors page
+- **THEN** the system returns actors whose FirstName, LastName, or Biography match the search term case-insensitively
 
 #### Scenario: Text search on directors
-- **WHEN** the user types a search term in the search box on the Directors page
-- **THEN** the system returns directors whose FirstName, LastName, or Biography match the search term
+- **WHEN** the user types a search term (or partial search term) in the search box on the Directors page
+- **THEN** the system returns directors whose FirstName, LastName, or Biography match the search term case-insensitively
 
 #### Scenario: Text search with no results
 - **WHEN** the user types a search term that matches no documents
 - **THEN** the system displays a message indicating no results were found
 
-#### Scenario: Text search index language override disabled
-- **WHEN** text search indexes are created on collections containing a `Language` property
-- **THEN** the text index options set `language_override: "none"` to prevent document language strings from breaking MongoDB text search tokenization
+#### Scenario: Substring and case-insensitive matching
+- **WHEN** the user types a partial search term (e.g. "Mul") or uses mixed-case text
+- **THEN** the system matches target fields case-insensitively without requiring full word exact matches
 
 ### Requirement: Combine filters with text search
 The system SHALL allow the user to apply both attribute filters and text search simultaneously.

@@ -30,7 +30,15 @@ public class DirectorService
         var filter = Builders<Director>.Filter.Eq(d => d.IsActive, true);
 
         if (!string.IsNullOrWhiteSpace(searchText))
-            filter &= Builders<Director>.Filter.Text(searchText);
+        {
+            var escapedText = System.Text.RegularExpressions.Regex.Escape(searchText);
+            var regex = new MongoDB.Bson.BsonRegularExpression(escapedText, "i");
+            filter &= Builders<Director>.Filter.Or(
+                Builders<Director>.Filter.Regex(d => d.FirstName, regex),
+                Builders<Director>.Filter.Regex(d => d.LastName, regex),
+                Builders<Director>.Filter.Regex(d => d.Biography, regex)
+            );
+        }
 
         if (!string.IsNullOrWhiteSpace(specialization))
             filter &= Builders<Director>.Filter.Eq(d => d.Specialization, specialization);

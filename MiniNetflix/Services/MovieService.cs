@@ -47,7 +47,14 @@ public class MovieService
         var filter = Builders<Movie>.Filter.Eq(m => m.IsActive, true);
 
         if (!string.IsNullOrWhiteSpace(searchText))
-            filter &= Builders<Movie>.Filter.Text(searchText);
+        {
+            var escapedText = System.Text.RegularExpressions.Regex.Escape(searchText);
+            var regex = new MongoDB.Bson.BsonRegularExpression(escapedText, "i");
+            filter &= Builders<Movie>.Filter.Or(
+                Builders<Movie>.Filter.Regex(m => m.Title, regex),
+                Builders<Movie>.Filter.Regex(m => m.Synopsis, regex)
+            );
+        }
 
         if (!string.IsNullOrWhiteSpace(genre))
             filter &= Builders<Movie>.Filter.Eq(m => m.Genre, genre);
